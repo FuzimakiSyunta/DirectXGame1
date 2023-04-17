@@ -3,6 +3,7 @@
 #include <cassert>
 #include"ImGuiManager.h"
 #include"PrimitiveDrawer.h"
+#include"AxisIndicator.h"
 
 GameScene::GameScene() {}
 
@@ -10,6 +11,7 @@ GameScene::~GameScene()
 {
 	/* delete sprite_;*/
 	delete model_;
+	delete debugCamera_;
 }
 
 void GameScene::Initialize() {
@@ -33,7 +35,12 @@ void GameScene::Initialize() {
 	voiceHandle_ = audio_->PlayWave(soundDataHandle_, true);
 	//ライン描画が参照するビュープロジェクションを指定する(アドレス渡し)
 	PrimitiveDrawer::GetInstance()->SetViewProjection(&viewprojection_);
-
+	//デバッグカメラの生成
+	debugCamera_ = new DebugCamera(1280, 720);
+	//軸方向表示を有効にする
+	AxisIndicator::GetInstance()->SetVisible(true);
+	//軸方向表示が参照するビュープロジェクションを指定する(アドレス渡し)
+	AxisIndicator::GetInstance()->SetTargetViewProjection(&debugCamera_->GetViewProjection());
 }
 
 void GameScene::Update() 
@@ -61,6 +68,8 @@ void GameScene::Update()
 	ImGui::End();
 	//デモウィンドウの表示を有効化
 	ImGui::ShowDemoWindow();
+	//デバッグカメラの更新
+	debugCamera_->Update();
 }
 
 void GameScene::Draw() {
@@ -92,14 +101,15 @@ void GameScene::Draw() {
 
 	/// <summary>
 	/// ここに3Dオブジェクトの描画処理を追加できる
-	model_->Draw(worldtransform_, viewprojection_, textureHandle_);
+	model_->Draw(worldtransform_, debugCamera_->GetViewProjection(), textureHandle_);
 	
 	/// </summary>
 
 	// 3Dオブジェクト描画後処理
 	Model::PostDraw();
 	// ラインを描画する
-	PrimitiveDrawer::GetInstance()->DrawLine3d({10,0, 0}, {0, 0, 0}, {255, 0, 0});
+	PrimitiveDrawer::GetInstance()->DrawLine3d({10 ,0, 0}, {0, 0, 0}, {1, 0, 0,1});
+
 #pragma endregion
 
 #pragma region 前景スプライト描画
